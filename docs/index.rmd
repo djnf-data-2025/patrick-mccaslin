@@ -83,7 +83,7 @@ percap_income2023
 
 Load the MD test score data
 ```{r}
-scores <- read.csv("./data/mcap_23_24/lea_ela_scores_23_24_by_level.csv")
+scores <- read.csv("../data/mcap_23_24/lea_ela_scores_23_24_by_level.csv")
 
 ```
 
@@ -100,26 +100,26 @@ Load shapefile of Montgomery County schools
 ```{r}
 
 #Trying to add outline of counties using Shapefile
-mont_schools<- st_read("./data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
+mont_schools<- st_read("../data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
 ```
 
 
 map your data
 ```{r}
-map_plot <- ggplot(data = XXXX, aes(x = long, y = lat)) +
-  geom_polygon(fill = "white", color = "black") +
-  geom_point(data = XXXX, aes(x = lynching.lon, y = lynching.lat, color = in_state), size = 3) +
-  coord_quickmap() +
-  theme_void() + 
-  labs(title="XXXX") + 
-  theme(axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    axis.title.y = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank())
-
-print(map_plot)
+# map_plot <- ggplot(data = XXXX, aes(x = long, y = lat)) +
+#   geom_polygon(fill = "white", color = "black") +
+#   geom_point(data = XXXX, aes(x = lynching.lon, y = lynching.lat, color = in_state), size = 3) +
+#   coord_quickmap() +
+#   theme_void() + 
+#   labs(title="XXXX") + 
+#   theme(axis.title.x = element_blank(),
+#     axis.text.x = element_blank(),
+#     axis.ticks.x = element_blank(),
+#     axis.title.y = element_blank(),
+#     axis.text.y = element_blank(),
+#     axis.ticks.y = element_blank())
+# 
+# print(map_plot)
 ```
 ```
 
