@@ -1,0 +1,240 @@
+---
+title: "load_and_analyze"
+output: html_document
+---
+
+#grey areas are code blocks
+#green play button to run code block
+
+#20 obs of 15 vars = 20 rows of 15 columns
+
+## Setup
+
+```{r}
+#
+# Install necessary libraries if not installed
+#
+
+# if tidyverse not installed, install
+if (!requireNamespace("tidyverse", quietly = TRUE)) {
+  install.packages("tidyverse")
+}
+
+#
+# Load libraries
+#
+
+library(tidyverse)
+
+```
+
+## Load Data
+
+```{r}
+#
+# Load data
+#
+
+bp_fy2020 <- read_csv("bp_fy_2020.csv")
+
+```
+## Get a Sense of the Data
+```{r}
+#
+# Get a sense of it
+#
+
+# Examine columns, data types, select values
+bp_fy2020 |>
+  glimpse()
+
+# View it in interactive viewer
+View(bp_fy2020)
+
+```
+
+
+## Ask Questions
+
+### Arrange, Select
+
+Q: Which sector has the highest number of apprehensions in FY 2020?
+Method: Arrange, Select
+A: 
+```{r}
+
+#piping is taking the thing on the left and putting it in the function on the right
+#piping can chain functions
+#select in "select(sector, yearly_total)" means get rid of all columns except sector and yearly total 
+#arrange is using desc for descending order
+#default order is lowest to highest
+
+bp_fy2020 |>
+  arrange(desc(yearly_total)) |> 
+  select(sector, yearly_total)
+
+```
+
+Q: Which sector has the lowest number of apprehensions in FY 2020?
+Method: Arrange, Select
+A: 
+
+```{r}
+
+bp_fy2020 |>
+  arrange(yearly_total) |> 
+  select(sector, yearly_total)
+
+```
+
+### Filter
+
+Q: How many apprehensions did Yuma have in FY 2020?
+Method: Select, Filter
+A: 
+
+```{r}
+
+#filter lets you select a column, then the select narrows down the columns to yearly_total
+
+bp_fy2020 |>
+  filter(sector == "Yuma") |> 
+  select(sector, yearly_total)
+
+```
+
+### Summarize
+Q: How many apprehensions were there in FY 2020 across all sectors?
+Method: Summarize, Sum
+A: 
+
+```{r}
+
+#summarize function creates a new column called total_apprehensions and puts in the sum of the yearly_total column
+
+bp_fy2020 |>
+  summarize(total_apprehensions = sum(yearly_total, na.rm = TRUE))
+
+```
+
+Q: What was the average number of apprehensions in each sector in FY 2020?
+Method: Summarize, Mean
+A: 
+
+```{r}
+
+#same as above but using key word average
+
+bp_fy2020 |>
+  summarize(average_apprehensions = mean(yearly_total, na.rm = TRUE))
+
+```
+
+### Creating New Columns 
+Q: How many apprehensions were there in Miami in October, November and December of FY2020?
+Method: Mutate, Filter
+A: 
+```{r}
+
+#first pipe is creating a new column that adds up those columns and puts it in fy_2020_Q1
+#next pipe filters to just Miami
+#next pipe selects just columns we care about
+
+bp_fy2020 |>
+  mutate(fy_2020_Q1 = october + november + december) |>
+  filter(sector == "Miami") |> 
+  select(sector, fy_2020_Q1)
+
+
+```
+
+Q: What percentage of apprehensions in Miami were in October, November and December in FY2020?
+Method: Mutate, Filter, Select 
+A: 
+```{r}
+
+#first three columns do the same as above
+#mutate key word to do arithmetic
+
+bp_fy2020 |>
+  mutate(fy_2020_Q1 = october + november + december) |>
+  filter(sector == "Miami") |> 
+  select(sector, fy_2020_Q1, yearly_total) |>
+  mutate(percentage = fy_2020_Q1 / yearly_total * 100)
+
+
+```
+### Grouping and summarizing
+
+Q: What was the total number of apprehensions in each border region -- Coastal, Northern, Southwest -- for FY 2020?
+Method: Group By, Summarize
+A: 
+```{r}
+
+#cluster these sectors into specific groups using mutate
+#puts this in a new column called border_region
+
+#when the sector is in that list of Miami, NoLa, Ramey, put it in the Coastal Border column
+
+#group_by and summarize creates a pivot table, run to see
+
+bp_fy2020 |>
+  mutate(
+    border_region = case_when(
+      sector %in% c("Miami", "New Orleans", "Ramey") ~ "Coastal Border",
+      
+      sector %in% c(
+        "Blaine", "Buffalo", "Detroit", "Grand Forks",
+        "Havre", "Houlton", "Spokane", "Swanton"
+      ) ~ "Northern Border",
+      
+      sector %in% c(
+        "Big Bend", "Del Rio", "El Centro", "El Paso",
+        "Laredo", "Rio Grande Valley", "San Diego", "Tucson", "Yuma"
+      ) ~ "Southwest Border",
+      
+      TRUE ~ NA_character_
+    )
+  ) |>
+  select(border_region, sector, yearly_total) |>
+  group_by(border_region) |>
+  summarize(
+    total_apprehensions = sum(yearly_total, na.rm = TRUE)
+  ) |>
+  arrange(desc(total_apprehensions))
+  
+```
+
+## Your Turn
+Develop three questions that you can answer using the data in `bp_fy2020` and write the code to answer it.
+
+```{r}
+#Are some regions more popular to enter throughout the year than others?
+
+#deselects fy and yearly total columns from the table
+#pivot longer makes the table into many rows from the columns
+
+bp_fy2020 |>
+  select(-c(fy, yearly_total, sector)) |>
+  pivot_longer(
+    cols=c(-sector),
+    names_to = "month",
+    values_to = "apprehensions"
+  ) |>
+mutate(
+  season = case_when(
+    month %in% c("october","november","december") ~ "Q1",
+    month %in% c("january","february","march") ~ "Q2",
+    month %in% c("april","may","june") ~ "Q3",
+    month %in% c("july","august","september") ~ "Q4",
+    TRUE ~ NA_character_
+  )
+) |>
+  group_by(season) |>
+  summarize(
+    total_apprehensions = sum(apprehensions, na.rm = TRUE)
+  ) |>
+  arrange(desc(total_apprehensions))
+
+
+```

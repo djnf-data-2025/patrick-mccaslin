@@ -55,7 +55,7 @@ library(sf)
 Census API key.
 
 ```{r message=FALSE}
-census_api_key("XXXXX", install = TRUE, overwrite = TRUE)
+census_api_key("28879a2a7fdb27f57c2ba4d6b21721accfc3a99e", install = TRUE, overwrite = TRUE)
 ```
 
 ```{r}
@@ -83,7 +83,7 @@ percap_income2023
 
 Load the MD test score data
 ```{r}
-scores <- read.csv("../data/mcap_23_24/lea_ela_scores_23_24_by_level.csv")
+scores <- read.csv("./data/mcap_23_24/lea_ela_scores_23_24_by_level.csv")
 
 ```
 
@@ -100,7 +100,7 @@ Load shapefile of Montgomery County schools
 ```{r}
 
 #Trying to add outline of counties using Shapefile
-mont_schools<- st_read("../data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
+mont_schools<- st_read("./data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
 ```
 
 
@@ -144,3 +144,9 @@ Documentation for Maryland test scores: https://reportcard.msde.maryland.gov/
 
 
 This allows you to start the analysis by unified school district. You should hunt down the income data by high school, and elementary school district. 
+
+percap_income2023[percap_income2023$variable != "number_households", ]
+scores_average[order(scores_average$x2023), ]
+filtered_percap <- percap_income2023[percap_income2023$variable != "number_households", ]
+sorted_filtered_percap <- filtered_percap[order(filtered_percap$x2023), ]
+sorted_filtered_scores <- scores_average[order(scores_average$x2023), ]
