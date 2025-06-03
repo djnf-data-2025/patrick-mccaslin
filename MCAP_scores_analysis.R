@@ -30,5 +30,14 @@ scores_all_grades <- scores |>
   arrange(desc(Proficient.Pct))
 view(scores_all_grades)
 
+#read in shp file for Montgomery County school district
+districts <- st_read("MCPS_GIS_Data_2024_2025 (1)/Schools.shp")
+
+#read in shp file for clusters
+clusters <- st_read("MCPS_GIS_Data_2024_2025 (1)/Cluster.shp")
+
+
 #read in school addresses, zip codes, etc
 school_addresses <- read.csv("Maryland_Education_Facilities_-_PreK_thru_12_Education_(Public_Schools).csv")
+
+
