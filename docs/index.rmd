@@ -6,28 +6,78 @@ date: "2025-05-07"
 
 A demo notebook for Dow Jones News Fund data interns
 
-During the week’s training, you will work on a project called Investigate Your Community to produce detailed story pitches relevant to their summer internship positions. The goal is to have the students research a topic relevant to your newsroom so they can get to work immediately at the internship. 
+During the week’s training, you will work on a project called Investigate Your Community to produce detailed story pitches relevant to their summer internship positions. The goal is to have the students research a topic relevant to your newsroom so they can get to work immediately at the internship.
 
 Here are some examples from last year’s DJNF data journalism training:
 
-Hannah Rosenberger, at ASI Media/Counselor magazine, produced this analysis on name, image and likeness trends: https://hrosenberger.github.io/ASI-NIL-Project/
+Hannah Rosenberger, at ASI Media/Counselor magazine, produced this analysis on name, image and likeness trends: <https://hrosenberger.github.io/ASI-NIL-Project/>
 
-Shifra Dayak, an intern at the Connecticut Mirror, produced this analysis of environment spill data: https://shifradayak.github.io/DJNF_Merrill/ct_env_spills.html.
+Shifra Dayak, an intern at the Connecticut Mirror, produced this analysis of environment spill data: <https://shifradayak.github.io/DJNF_Merrill/ct_env_spills.html>.
 
-Michael Zhang, an intern at the Houston Landing, explored local election data: https://michaelzhangreporter.github.io/Houston_Campaign_Finance/
+Michael Zhang, an intern at the Houston Landing, explored local election data: <https://michaelzhangreporter.github.io/Houston_Campaign_Finance/>
 
+Here's what your newsroom suggested for a project: As far as I can tell, no one has ever done an income vs. student test scores analysis in Maryland. We are going to try to do one for the entire state. Patrick can start with whatever we have in here. He should plan to have 23 counties worth of data for his final analysis.
 
-Here's what your newsroom suggested for a project:
-As far as I can tell, no one has ever done an income vs. student test scores analysis in Maryland. We are going to try to do one for the entire state. Patrick can start with whatever we have in here. He should plan to have 23 counties worth of data for his final analysis.
+Google Drive link that has some of the data in it. I will compile more of it into this folder as I wrangle things together. <https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk?usp=drive_link>
 
-Google Drive link that has some of the data in it. I will compile more of it into this folder as I wrangle things together. https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk?usp=drive_link
+# **Story memo**
 
+**Patrick McCaslin, patrick.mccaslin\@thebaltimorebanner.com, June 2, 2025**
+
+**Subject:**
+
+This story will investigate the relationship between a family's median income and a public school's performance on Maryland's state test, the MCAP. Depending on the strength of the correlation, it will look at how household income may affect a student's experience in school  and discuss the effect of The Blueprint for Maryland's Future on ameliorating this issue.
+
+**Relevance:**
+
+In early April, Maryland legislators concluded a standoff with Gov. Wes Moore surrounding the Blueprint. They gutted Moore's bill to defund the Blueprint over the course of four years. Amongst other requests, it specifically called to defund the provision that increased funding for students who live in areas with concentrated poverty.
+
+Understanding income's effect on the performance of schools may provide important context to understanding the use of the Blueprint.
+
+**Target audience:**
+
+Primarily parents of students in public schools. Secondarily, politically-minded readers who may have a strong opinion about allocating such a large part of the budget to the Blueprint.
+
+**Potential sources:**
+
+- Legislators who lobbied to keep the Blueprint fully funded
+- Administrator/teacher/student at a school that performed particularly well on the MCAP and are based in a high income area. What are their keys to success?
+- Administrator/teacher/student at a school that perofrmed poorly on the MCAP and is based in a low income area.
+- Person at an outlier school (e.g. high income/low score or low income/high score)
+
+**Potential impact:**
+
+Depending on the level of correlation, this may influence voters' opinions on the Blueprint and affect how the state allocates money in the future. It could also illuminate an important underlying factor in educational success, especially if it seems to affect certain districts more than others.
+
+**Surprising observations:**
+
+- A cursory review of the data indicates that some high income schools may perform abysmally and vice versa. If these are outliers, they may be interesting cases to investigate to determine how these schools differentiate themselves from others.
+- There does appear to be a correlation between income and test scores. While this is somewhat intuitive, there is little research and few articles to reflect this. Instead, the articles focus on SAT/ACT and income correlation, which has drawn scrutiny. 
+- There has been criticism around news organizations drawing connections between SAT/ACT scores and household income due to the tendency to group scores and group income levels which decreases the ability to determine correlation. Focusing on school scores allows for more datapoints and better estimates.
+
+**Visuals:**
+
+- A scatterplot could provide a compelling visual for the correlation between income and test scores.
+- A dumbbell graph could be useful if the story evaluates change in test scores over time.
+
+**Context:**
+
+State test scores have largely stagnated over the past few years, regardless of race and location. For low-scoring districts, this indicates that schools are struggling to catch up and income could help illuminate the why. Especially now, the economy is an issue that is particularly relevant to Americans and showing its effect on educational outcomes could add to the picture. Additionally, the Blueprint has provisions for helping districts in poverty that have recently been called into question. This will be relevant as the state approaches its gubernatorial election and other local elections.
+
+**Next steps:**
+
+There is a fair bit of cleaning and information that I need to add to the scores table and the income table to determine if there is a correlation between income and test scores. This will include determining where the school serves and joining the tables.
+
+**Estimated time of completion:**
+
+Three weeks (Early July)
 
 
 
 This notebook helps you get started
 
 # Load software libraries
+
 ```{r}
 #install.packages("tidyverse")
 #install.packages("janitor")
@@ -49,7 +99,6 @@ library(sf)
 
 ```
 
-
 # Load your data
 
 Census API key.
@@ -63,8 +112,8 @@ census_api_key("28879a2a7fdb27f57c2ba4d6b21721accfc3a99e", install = TRUE, overw
 v23_acs <- load_variables(2023, "acs5", cache = TRUE)
 ```
 
-
 #Income by unified school district, 2023 ACS
+
 ```{r}
 #2023 Per Capita By Unified School District ACS
 #B19001 COUNTS THE NUMBER OF HOUSEHOLDS
@@ -82,29 +131,33 @@ percap_income2023
 ```
 
 Load the MD test score data
+
 ```{r}
-scores <- read.csv("../data/mcap_23_24/lea_ela_scores_23_24_by_level.csv")
+
+scores <- read.csv("../data/mcap_23_24/lea_ela_scores_23_24.csv")
+filtered_sorted_scores <- scores |>
+  select(school_name,x2023) |>
+  arrange(desc(x2023))
+view(filtered_sorted_scores)
 
 ```
-
-
 
 Join the income and test score data
+
 ```{r}
 
 ```
 
-
-
 Load shapefile of Montgomery County schools
+
 ```{r}
 
 #Trying to add outline of counties using Shapefile
 mont_schools<- st_read("../data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
 ```
 
-
 map your data
+
 ```{r}
 # map_plot <- ggplot(data = XXXX, aes(x = long, y = lat)) +
 #   geom_polygon(fill = "white", color = "black") +
@@ -121,32 +174,30 @@ map your data
 # 
 # print(map_plot)
 ```
-```
 
+\`\`\`
 
+Data details: Data files with Maryland School boundaries <https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk>
 
-Data details:
-Data files with Maryland School boundaries
-https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk
-
-
-
-
-# Questions 
+# Questions
 
 Write down questions you want answered:
 
-
-
 # Data Details
 
-Documentation for Maryland test scores: https://reportcard.msde.maryland.gov/
+Documentation for Maryland test scores: <https://reportcard.msde.maryland.gov/>
+
+This allows you to start the analysis by unified school district. You should hunt down the income data by high school, and elementary school district.
+
+```{r}
+#Filter for only the income rows, look at only the school name and percap income columns, and sort in descending order
+
+sorted_filtered_percap <- percap_income2023 |> 
+  filter(variable == "percap_income") |> 
+  select(NAME,estimate) |>
+  arrange(desc(estimate))
+view(sorted_filtered_percap)
+
+```
 
 
-This allows you to start the analysis by unified school district. You should hunt down the income data by high school, and elementary school district. 
-
-percap_income2023[percap_income2023$variable != "number_households", ]
-scores_average[order(scores_average$x2023), ]
-filtered_percap <- percap_income2023[percap_income2023$variable != "number_households", ]
-sorted_filtered_percap <- filtered_percap[order(filtered_percap$x2023), ]
-sorted_filtered_scores <- scores_average[order(scores_average$x2023), ]

@@ -19,7 +19,8 @@ library(sf)
 #Table that includes proficiency in MCAP based on school and even race within school.
 #Also includes if the student has a disability
 scores <- read.csv("~/GitHub/patrick-mccaslin/2021_MCAP_ELA_Scores.csv") |>
-  mutate(Proficient.Pct == as.numeric(Proficient.Pct))
+  #filter(!is.na(as.numeric(Proficient.Pct))) %>%
+  mutate(Proficient.Pct = as.numeric(Proficient.Pct))
 
 #Only look at rows that contain all schools, disregarding race, gender, or
 # other demographic factors
@@ -28,3 +29,6 @@ scores_all_grades <- scores |>
   select(School.Name, Proficient.Pct) |>
   arrange(desc(Proficient.Pct))
 view(scores_all_grades)
+
+#read in school addresses, zip codes, etc
+school_addresses <- read.csv("Maryland_Education_Facilities_-_PreK_thru_12_Education_(Public_Schools).csv")

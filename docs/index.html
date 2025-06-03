@@ -376,7 +376,88 @@ can start with whatever we have in here. He should plan to have 23
 counties worth of data for his final analysis.</p>
 <p>Google Drive link that has some of the data in it. I will compile
 more of it into this folder as I wrangle things together. <a href="https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk?usp=drive_link" class="uri">https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk?usp=drive_link</a></p>
+<div id="story-memo" class="section level1">
+<h1><strong>Story memo</strong></h1>
+<p><strong>Patrick McCaslin, patrick.mccaslin@thebaltimorebanner.com,
+June 2, 2025</strong></p>
+<p><strong>Subject:</strong></p>
+<p>This story will investigate the relationship between a family’s
+median income and a public school’s performance on Maryland’s state
+test, the MCAP. Depending on the strength of the correlation, it will
+look at how household income may affect a student’s experience in school
+and discuss the effect of The Blueprint for Maryland’s Future on
+ameliorating this issue.</p>
+<p><strong>Relevance:</strong></p>
+<p>In early April, Maryland legislators concluded a standoff with
+Gov. Wes Moore surrounding the Blueprint. They gutted Moore’s bill to
+defund the Blueprint over the course of four years. Amongst other
+requests, it specifically called to defund the provision that increased
+funding for students who live in areas with concentrated poverty.</p>
+<p>Understanding income’s effect on the performance of schools may
+provide important context to understanding the use of the Blueprint.</p>
+<p><strong>Target audience:</strong></p>
+<p>Primarily parents of students in public schools. Secondarily,
+politically-minded readers who may have a strong opinion about
+allocating such a large part of the budget to the Blueprint.</p>
+<p><strong>Potential sources:</strong></p>
+<ul>
+<li>Legislators who lobbied to keep the Blueprint fully funded</li>
+<li>Administrator/teacher/student at a school that performed
+particularly well on the MCAP and are based in a high income area. What
+are their keys to success?</li>
+<li>Administrator/teacher/student at a school that perofrmed poorly on
+the MCAP and is based in a low income area.</li>
+<li>Person at an outlier school (e.g. high income/low score or low
+income/high score)</li>
+</ul>
+<p><strong>Potential impact:</strong></p>
+<p>Depending on the level of correlation, this may influence voters’
+opinions on the Blueprint and affect how the state allocates money in
+the future. It could also illuminate an important underlying factor in
+educational success, especially if it seems to affect certain districts
+more than others.</p>
+<p><strong>Surprising observations:</strong></p>
+<ul>
+<li>A cursory review of the data indicates that some high income schools
+may perform abysmally and vice versa. If these are outliers, they may be
+interesting cases to investigate to determine how these schools
+differentiate themselves from others.</li>
+<li>There does appear to be a correlation between income and test
+scores. While this is somewhat intuitive, there is little research and
+few articles to reflect this. Instead, the articles focus on SAT/ACT and
+income correlation, which has drawn scrutiny.</li>
+<li>There has been criticism around news organizations drawing
+connections between SAT/ACT scores and household income due to the
+tendency to group scores and group income levels which decreases the
+ability to determine correlation. Focusing on school scores allows for
+more datapoints and better estimates.</li>
+</ul>
+<p><strong>Visuals:</strong></p>
+<ul>
+<li>A scatterplot could provide a compelling visual for the correlation
+between income and test scores.</li>
+<li>A dumbbell graph could be useful if the story evaluates change in
+test scores over time.</li>
+</ul>
+<p><strong>Context:</strong></p>
+<p>State test scores have largely stagnated over the past few years,
+regardless of race and location. For low-scoring districts, this
+indicates that schools are struggling to catch up and income could help
+illuminate the why. Especially now, the economy is an issue that is
+particularly relevant to Americans and showing its effect on educational
+outcomes could add to the picture. Additionally, the Blueprint has
+provisions for helping districts in poverty that have recently been
+called into question. This will be relevant as the state approaches its
+gubernatorial election and other local elections.</p>
+<p><strong>Next steps:</strong></p>
+<p>There is a fair bit of cleaning and information that I need to add to
+the scores table and the income table to determine if there is a
+correlation between income and test scores. This will include
+determining where the school serves and joining the tables.</p>
+<p><strong>Estimated time of completion:</strong></p>
+<p>Three weeks (Early July)</p>
 <p>This notebook helps you get started</p>
+</div>
 <div id="load-software-libraries" class="section level1">
 <h1>Load software libraries</h1>
 <pre class="r"><code>#install.packages(&quot;tidyverse&quot;)
@@ -475,7 +556,11 @@ percap_income2023 &lt;- get_acs(geography = &quot;school district (unified)&quot
 ## 10 2400150 Calvert County Public Schools, Maryland percap_…    56411  1642 2023 
 ## # ℹ 38 more rows</code></pre>
 <p>Load the MD test score data</p>
-<pre class="r"><code>scores &lt;- read.csv(&quot;../data/mcap_23_24/lea_ela_scores_23_24_by_level.csv&quot;)</code></pre>
+<pre class="r"><code>scores &lt;- read.csv(&quot;../data/mcap_23_24/lea_ela_scores_23_24.csv&quot;)
+filtered_sorted_scores &lt;- scores |&gt;
+  select(school_name,x2023) |&gt;
+  arrange(desc(x2023))
+view(filtered_sorted_scores)</code></pre>
 <p>Join the income and test score data</p>
 <p>Load shapefile of Montgomery County schools</p>
 <pre class="r"><code>#Trying to add outline of counties using Shapefile
@@ -516,13 +601,13 @@ mont_schools&lt;- st_read(&quot;../data/montgomery_county/MCPS_GIS_Data_2024_202
 <p>This allows you to start the analysis by unified school district. You
 should hunt down the income data by high school, and elementary school
 district.</p>
-<p>percap_income2023[percap_income2023<span class="math inline">\(variable != &quot;number_households&quot;, ]
-scores_average[order(scores_average\)</span>x2023), ] filtered_percap
-&lt;- percap_income2023[percap_income2023<span class="math inline">\(variable != &quot;number_households&quot;, ]
-sorted_filtered_percap &lt;-
-filtered_percap[order(filtered_percap\)</span>x2023), ]
-sorted_filtered_scores &lt;- scores_average[order(scores_average$x2023),
-]</p>
+<pre class="r"><code>#Filter for only the income rows, look at only the school name and percap income columns, and sort in descending order
+
+sorted_filtered_percap &lt;- percap_income2023 |&gt; 
+  filter(variable == &quot;percap_income&quot;) |&gt; 
+  select(NAME,estimate) |&gt;
+  arrange(desc(estimate))
+view(sorted_filtered_percap)</code></pre>
 </div>
 
 
