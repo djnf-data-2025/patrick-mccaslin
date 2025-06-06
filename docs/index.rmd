@@ -6,20 +6,6 @@ date: "2025-05-07"
 
 #rsw comment: cut the template material and focus on your project
 
-~~A demo notebook for Dow Jones News Fund data interns~~
-
-~~During the week’s training, you will work on a project called Investigate Your Community to produce detailed story pitches relevant to their summer internship positions. The goal is to have the students research a topic relevant to your newsroom so they can get to work immediately at the internship.~~
-
-~~Here are some examples from last year’s DJNF data journalism training:~~
-
-~~Hannah Rosenberger, at ASI Media/Counselor magazine, produced this analysis on name, image and likeness trends: <https://hrosenberger.github.io/ASI-NIL-Project/>~~
-
-~~Shifra Dayak, an intern at the Connecticut Mirror, produced this analysis of environment spill data: <https://shifradayak.github.io/DJNF_Merrill/ct_env_spills.html>.~~
-
-~~Michael Zhang, an intern at the Houston Landing, explored local election data: <https://michaelzhangreporter.github.io/Houston_Campaign_Finance/>~~
-
-**#rsw comment: integrate this material into your narrative**
-
 Here's what your newsroom suggested for a project: As far as I can tell, no one has ever done an income vs. student test scores analysis in Maryland. We are going to try to do one for the entire state. Patrick can start with whatever we have in here. He should plan to have 23 counties worth of data for his final analysis.
 
 Google Drive link that has some of the data in it. I will compile more of it into this folder as I wrangle things together. <https://drive.google.com/drive/folders/1INQ7mIAQ_PwJgA2kSylllJm1KjJwVYNk?usp=drive_link>
@@ -65,6 +51,8 @@ Depending on the level of correlation, this may influence voters' opinions on th
 
 **Visuals:**
 
+<iframe src='https://flo.uri.sh/visualisation/23619455/embed' title='Interactive or visual content' class='flourish-embed-iframe' frameborder='0' scrolling='no' style='width:100%;height:600px;' sandbox='allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'></iframe><div style='width:100%!;margin-top:4px!important;text-align:right!important;'><a class='flourish-credit' href='https://public.flourish.studio/visualisation/23619455/?utm_source=embed&utm_campaign=visualisation/23619455' target='_top' style='text-decoration:none!important'><img alt='Made with Flourish' src='https://public.flourish.studio/resources/made_with_flourish.svg' style='width:105px!important;height:16px!important;border:none!important;margin:0!important;'> </a></div>
+
 -   A scatterplot could provide a compelling visual for the correlation between income and test scores.
 -   A dumbbell graph could be useful if the story evaluates change in test scores over time.
 
@@ -80,7 +68,7 @@ There is a fair bit of cleaning and information that I need to add to the scores
 
 Three weeks (Early July)
 
-This notebook helps you get started
+# Documentation of project
 
 # Load software libraries
 
@@ -105,58 +93,144 @@ library(sf)
 
 ```
 
-# Load your data
-
-Census API key.
-
-```{r message=FALSE}
-census_api_key("28879a2a7fdb27f57c2ba4d6b21721accfc3a99e", install = TRUE, overwrite = TRUE)
-```
+# Load, clean, and sort the MD ELA test score data at school level
 
 ```{r}
-#Calls variables for the 2020 ACS census
-v23_acs <- load_variables(2023, "acs5", cache = TRUE)
+ela_scores_2023 <- read.csv("../MCAP Scores/2023_MCAP_ELA_Scores.csv")
+
+#If *, delete from df.
+
+ela_scores_2023 <- ela_scores_2023 |>
+  filter(Proficient.Pct != "*")
+
+#Convert strings stored in Proficient.Pct to doubles. When <5, convert to 5. When >95 convert to 95. Pasted and modified from ChatGPT.
+
+ela_scores_2023 <- ela_scores_2023 |> 
+  mutate(
+    Proficient.Pct = case_when( #new Proficient.Pct
+      Proficient.Pct == "<= 5.0" ~ 5L,
+      Proficient.Pct == ">= 95.0" ~ 95L,
+      suppressWarnings(!is.na(as.numeric(Proficient.Pct))) ~ as.numeric(Proficient.Pct),
+      TRUE ~ 0
+    )
+  )
+
+
+ela_scores_2023 <- ela_scores_2023 |>
+  filter(Assessment == " English Language Arts All Grades") |> 
+  select(School.Name,Proficient.Pct) |>
+  arrange(desc(Proficient.Pct))
+view(ela_scores_2023)
 ```
-
-#Income by unified school district, 2023 ACS
-
-```{r}
-#2023 Per Capita By Unified School District ACS
-#B19001 COUNTS THE NUMBER OF HOUSEHOLDS
-#B19301_001 is the per capita income "Per capita income in the past 12 months (in 2023 inflation-adjusted dollars"
-#Documentation: https://censusreporter.org/tables/B19301/
-percap_income2023 <- get_acs(geography = "school district (unified)", 
-              variables = c(number_households = "B19001_001", percap_income = "B19301_001"), 
-               state = "MD", 
-               year = 2023) %>% 
-  mutate(year=("2023"))
-
- 
-percap_income2023
-
-```
-
-Load the MD test score data
+# Find the relationship between school and per capita income
 
 ```{r}
 
-scores <- read.csv("../data/mcap_23_24/lea_ela_scores_23_24.csv")
-filtered_sorted_scores <- scores |>
-  select(school_name,x2023) |>
-  arrange(desc(x2023))
-view(filtered_sorted_scores)
+#Gets per capita income data by zip code for the entire U.S. based off of 2023 ACS
+percap_national_income2023 <- get_acs(geography = "zcta", 
+              variables = "B19301_001", 
+              year = 2023) |> 
+              rename(Income_per_cap = estimate)
+
+#Load shp file which contains zip codes of each school in Montgomery County. Only look at zip and school name.
+schools <- st_read("../MCPS_GIS_Data_2024_2025 (1)/Schools.shp")
+
+schools_zip <- schools |>
+  select(schoolname,ZIP)
+
+#Filter to only contain zip codes that are found in the Montgomery County school district
+
+zip_incomes <- percap_national_income2023 |> 
+#  mutate(NAME = str_remove(NAME, "ZCTA ")) |> 
+  filter(GEOID %in% schools_zip$ZIP)
+  
+view(zip_incomes)
+
+#Now join one to many. We have a df () which contains school names and zip codes. We have another df () which contains zip codes and income.
+
+#First change column name from GEOID to ZIP to allow for join.
+
+zip_incomes <- zip_incomes |> rename(ZIP = GEOID)
+
+#And join! Now we have schools and income connected
+
+schools_income <- left_join(schools_zip, zip_incomes, by = "ZIP")
+view(schools_income)
+```
+# Now find the relationship between zip codes and schools
+
+```{r}
+library("stringr")
+
+
+
+# Initialize vector to store matches
+matched_schools <- character(nrow(schools_income))
+
+# Loop through each name
+for (i in seq_along(schools_income$schoolname)) {
+  pattern <- paste0("\\b", schools_income$schoolname[i], "\\b")
+  
+  # Find matches
+  matches <- ela_scores_2023$School.Name[str_detect(ela_scores_2023$School.Name, pattern)]
+  
+  # Choose match or manual. If manual, that means I would theoretically replace it manually for the correct value.
+  if (length(matches) == 1) {
+    matched_schools[i] <- matches
+  } else {
+    matched_schools[i] <- "MANUAL"
+  }
+}
+
+#Add the school name column to matched schools
+schools_income$schoolname <- matched_schools
+
+#Filter out the manual rows. For these purposes, I don't really need a large or completely accurate sample.
+schools_income <- schools_income |> 
+  filter(schoolname != "MANUAL")
+
+#Rename column for join
+ela_scores_2023 <- ela_scores_2023 |> 
+  rename(schoolname = School.Name)
+
+#Join income with test scores
+income_scores <- ela_scores_2023 |> 
+  left_join(schools_income, by = "schoolname") |> 
+  filter(ZIP != "NA")
 
 ```
 
-Join the income and test score data
+
 
 ```{r}
 
+#Call Groq to help standardize school names between the two dfs.
+
+#groq <- chat_groq()
+
+#No fooling around Groq
+
+#groq$chat("In the next few instructions, I want you to only give me the thing I'm asking for in R format. I don't want any intros or explanations or pleasentries. I want you to provide only the exact strucutred output I am seeking. If I ask for a vector, provide me with a vector. Do not provide me with a way to obtain the vector. Do not use Markdown code blocks or triple backticks.If you understand, give me a code for reading a csv called test.csv")
+
+#groq$chat(paste("Go through the first 10 names in schoolname in schools_income$schoolname and replace it with the corresponding name in ela_scores_2023. Most times, the name used in schoolname corresponds to the last name of the school used in ela_scores_2023 If there are multiple feasible results, paste a note so that I know to manually replace it. Output the result as a vector."))
+#schools_income$schoolname
+#ela_scores_2023$School.Name
 ```
 
-Load shapefile of Montgomery County schools
+# Load shapefiles of Montgomery County schools
 
 ```{r}
+
+#read in shp file for Montgomery County school district
+districts <- st_read("../MCPS_GIS_Data_2024_2025 (1)/Schools.shp")
+
+#read in shp file for clusters
+clusters <- st_read("../MCPS_GIS_Data_2024_2025 (1)/Cluster.shp")
+
+# map <- ggplot(data = clusters) +
+#   geom_sf(fill = "lightblue", color = "black") +
+#   theme_minimal() +
+#   labs(title = "Map of Clusters")
 
 #Trying to add outline of counties using Shapefile
 mont_schools<- st_read("../data/montgomery_county/MCPS_GIS_Data_2024_2025/Schools.shp")
@@ -165,8 +239,9 @@ mont_schools<- st_read("../data/montgomery_county/MCPS_GIS_Data_2024_2025/School
 map your data
 
 ```{r}
-# map_plot <- ggplot(data = XXXX, aes(x = long, y = lat)) +
-#   geom_polygon(fill = "white", color = "black") +
+ # map_plot <- ggplot(data = income_map, aes(x = X, y = Y)) +
+ #   geom_polygon(fill = "white", color = "black") 
+#+
 #   geom_point(data = XXXX, aes(x = lynching.lon, y = lynching.lat, color = in_state), size = 3) +
 #   coord_quickmap() +
 #   theme_void() + 
@@ -198,10 +273,10 @@ This allows you to start the analysis by unified school district. You should hun
 ```{r}
 #Filter for only the income rows, look at only the school name and percap income columns, and sort in descending order
 
-sorted_filtered_percap <- percap_income2023 |> 
-  filter(variable == "percap_income") |> 
-  select(NAME,estimate) |>
-  arrange(desc(estimate))
-view(sorted_filtered_percap)
+# sorted_filtered_percap <- percap_income2023 |> 
+#   filter(variable == "percap_income") |> 
+#   select(NAME,estimate) |>
+#   arrange(desc(estimate))
+# view(sorted_filtered_percap)
 
 ```

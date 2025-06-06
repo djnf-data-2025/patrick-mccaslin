@@ -1,0 +1,171 @@
+---
+title: "DJNF_ai_cleaning"
+author: "Daniel Trielli"
+date: "2025-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setup
+
+You're going to use the Groq API key you've been using this week. (If you don't have one, go here: https://console.groq.com/keys, create an account, and then set it as GROQ_API_KEY=<your key> (no quotes needed) in your .Renviron file using `usethis::edit_r_environ()`{style="padding: 0px 1px; border-width: 1px; border-style: solid; border-color: rgb(230, 230, 230) !important; border-image: initial; background-color: rgb(243, 243, 243) !important; font-family: Monaco, monospace !important; font-size: 9pt !important;"}. Do the same thing for Google at https://aistudio.google.com/apikey, setting the key as GOOGLE_API_KEY=<your google key>. Restart R for them to take effect.
+
+```{r}
+#usethis::edit_r_environ()
+```
+
+Then, let's load the necessary packages:
+
+```{r install-packages, eval=FALSE}
+# Remove the comment symbol and run this if you need to install required packages
+# install.packages(c("ellmer", "httr", "jsonlite", "rvest"))
+```
+
+```{r load-packages}
+library(tidyverse)
+library(lubridate)
+library(ellmer)
+library(httr)
+library(jsonlite)
+library(rvest)
+```
+
+```{r llm-setup}
+
+# Set the model
+chat <- chat_groq()
+chat_g <- chat_google_gemini()
+chat$chat("Say something.")
+chat_g$chat("Say something.")
+```
+
+```{r}
+chat$chat("In the next few instructions, I want you to only give me the thing I'm asking. I don't want any intros or explanations or pleasentries. I want you to provide only code in R that does the thing I'm requesting. There's also no reason to put things in R markdown format. I just want the raw code, which I will save in my own variables, therefore I don't need any extra stuff. If you understand, give me a code for reading a csv called test.csv")
+
+chat_g$chat("In the next few instructions, I want you to only give me the thing I'm asking. I don't want any intros or explanations or pleasentries. I want you to provide only how the code in R looks like. Do not use Markdown code blocks or triple backticks. I just want the raw code, which I will save in my own variables, therefore I don't need any extra stuff. If you understand, give me a code for reading a csv called test.csv")
+```
+
+## The issues with dirty data
+
+Data often comes in messy and dirty, and by that, we mean it can have these issues:
+
+-   Missing data
+
+-   Wrong type of data
+
+-   Wrong inputs
+
+-   Inconsistent inputs
+
+-   Incoherent data structures
+
+All of those things are hard to fix, especially because they are inconsistent and hard to detect. Traditionally, the process of cleaning data involves a lot of trial and error, by iterating between manually checking entries to see how they went wrong and coding to fix things automatically, checking again, coding again, etc etc etc.
+
+## Exploring some dirty data
+
+For this exercise, we're going to explore data from the Aviation Safety Reporting System, a FAA registry of voluntary and confidential reports about safety issues in aviation. This data can be obtained from a search in this website: <https://asrs.arc.nasa.gov/search/database.html>.
+
+I selected all entries since January 2020 in Maryland, and exported as a CSV. This is what the CSV looks like:
+
+```{r}
+data <- read_csv('ASRS_DBOnline_sample.csv')
+```
+
+It's a very rich dataset, but there are some things we can see that are very bad about it. Cleaning dirty data with the help of an AI assistant
+
+#### Column names are neither descriptive or code-friendly
+
+```{r}
+colums_list <- as.list(colnames(data))
+```
+
+```{r}
+chat_g$chat(paste(
+    "Please clean up these column names. They should not have spaces or periods, just underlines to signify spaces when absolutely necessary. They also should not have capital letters or start with numbers. Make a list with only the new names, in R format, with no line breaks. Do not put each item in its own c() list. Have it all be in one c() list. Do not include any other text other than the list. No intro, no explonation, no r markdown code",
+    colums_list
+    )
+)
+```
+
+```{r}
+new_colnames <- c("acn", "date", "local_time_of_day", "locale_reference", "state_reference", "relative_position_angle_radial", 
+"relative_position_distance_nautical_miles", "altitude_agl_single_value", "altitude_msl_single_value", "latitude_longitude_uas", 
+"flight_conditions", "weather_elements_visibility", "work_environment_factor", "light", "ceiling", "rvr_single_value", "atc_advisory_17",
+"aircraft_operator_18", "make_model_name_19", "aircraft_zone_20", "crew_size_21", "operating_under_far_part_22", "flight_plan_23", 
+"mission_24", "nav_in_use_25", "flight_phase_26", "route_in_use_27", "airspace_28", "maintenance_status_maintenance_deferred_29", 
+"maintenance_status_records_complete_30", "maintenance_status_released_for_service_31", 
+"maintenance_status_required_correct_doc_on_board_32", "maintenance_status_maintenance_type_33", 
+"maintenance_status_maintenance_items_involved_34", "cabin_lighting_35", "number_of_seats_number_36", "passengers_on_board_number_37", 
+"crew_size_flight_attendant_number_of_crew_38", "airspace_authorization_provider_uas_39", 
+"operating_under_waivers_exemptions_authorizations_uas_40", "waivers_exemptions_authorizations_uas_41", 
+"airworthiness_certification_uas_42", "weight_category_uas_43", "configuration_uas_44", "flight_operated_as_uas_45", 
+"flight_operated_with_visual_observer_uas_46", "control_mode_uas_47", "flying_in_near_over_uas_48", "passenger_capable_uas_49", 
+"type_uas_50", "number_of_uas_being_controlled_uas_51", "aircraft_component", "manufacturer", "aircraft_reference", "problem", 
+"atc_advisory_56", "aircraft_operator_57", "make_model_name_58", "aircraft_zone_59", "crew_size_60", "operating_under_far_part_61", 
+"flight_plan_62", "mission_63", "nav_in_use_64", "flight_phase_65", "route_in_use_66", "airspace_67", 
+"maintenance_status_maintenance_deferred_68", "maintenance_status_records_complete_69", "maintenance_status_released_for_service_70", 
+"maintenance_status_required_correct_doc_on_board_71", "maintenance_status_maintenance_type_72", 
+"maintenance_status_maintenance_items_involved_73", "cabin_lighting_74", "number_of_seats_number_75", "passengers_on_board_number_76", 
+"crew_size_flight_attendant_number_of_crew_77", "airspace_authorization_provider_uas_78", 
+"operating_under_waivers_exemptions_authorizations_uas_79", "waivers_exemptions_authorizations_uas_80", 
+"airworthiness_certification_uas_81", "weight_category_uas_82", "configuration_uas_83", "flight_operated_as_uas_84", 
+"flight_operated_with_visual_observer_uas_85", "control_mode_uas_86", "flying_in_near_over_uas_87", "passenger_capable_uas_88", 
+"type_uas_89", "number_of_uas_being_controlled_uas_90", "location_of_person_91", "location_in_aircraft_92", "reporter_organization_93", 
+"function_94", "qualification_95", "experience_96", "cabin_activity_97", "human_factors_98", "communication_breakdown_99", 
+"uas_communication_breakdown_100", "asrs_report_number_accession_number_101", "location_of_person_102", "location_in_aircraft_103", 
+"reporter_organization_104", "function_105", "qualification_106", "experience_107", "cabin_activity_108", "human_factors_109", 
+"communication_breakdown_110", "uas_communication_breakdown_111", "asrs_report_number_accession_number_112", "anomaly", "miss_distance", 
+"were_passengers_involved_in_event", "detector", "when_detected", "result", "contributing_factors_situations", "primary_problem", 
+"narrative_121", "callback_122", "narrative_123", "callback_124", "synopsis", "x126")
+```
+
+```{r}
+# Replace column names
+colnames(data) <- unlist(new_colnames)
+```
+
+```{r}
+
+chat_g$chat(paste(
+    "I noticed that locale_reference has some values that look the same, but are inconsistent, with BWI being called different things like Baltimore International. Can you clean that up?",
+    data$localereference
+    )
+)
+```
+
+```{r}
+
+chat$chat(paste("What are some common issues that arrive in these anecdotes. Tailor your answer to an investigative journalist that wants to try to investigate wrongdoings or mistakes in air travel.",data$narrative_121))
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+clean_BWI_locale <- function(x) {
+  x <- gsub("Baltimore International.*", "BWI", x, ignore.case = TRUE)
+  x <- gsub("BWI.*", "BWI", x)
+  return(x)
+}
+
+data$locale_reference <- clean_BWI_locale(data$locale_reference)
+unique(data$locale_reference)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
