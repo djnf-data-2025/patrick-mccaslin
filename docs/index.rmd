@@ -4,7 +4,7 @@ output: html_document
 date: "2025-05-07"
 ---
 
-# **Story memo**
+# **A meritocracy? Are state test scores predetermined?**
 
 **Patrick McCaslin, patrick.mccaslin\@thebaltimorebanner.com, June 2, 2025**
 
@@ -40,9 +40,7 @@ h2 {
 
 <div id="container">
 
-<h2>Subject:</h2>
-
-This story looks into the moderate, positive relationship between per capita income and the local public school's performance on Maryland's state test, the MCAP. The story will discuss the effect of The Blueprint for Maryland's Future on ameliorating this issue.
+This story looks into the moderate, positive relationship between per capita income and the local public school's performance on Maryland's state test, the MCAP. It will discuss the effect of The Blueprint for Maryland's Future on ameliorating this issue.
 
 <h2>Context:</h2>
 
@@ -95,7 +93,7 @@ Or, if I should completely pivot to other factors such as race or geography. Per
 
 </div>
 
-# Load software libraries
+Load software libraries
 
 ```{r}
 #install.packages("tidyverse")
@@ -111,7 +109,7 @@ library(stringr)
 
 ```
 
-# Function to clean, and sort the test score data at school level
+Function to clean, and sort the test score data at school level
 
 ```{r}
 
@@ -143,7 +141,7 @@ data_cleaner <- function(df) {
 ```
 
 
-# Load other test score data
+Load other test score data
 
 ```{r}
 
@@ -163,7 +161,7 @@ math_scores_2023 <- read.csv("../MCAP Scores/2023_MCAP_MATH_Scores.csv")
 ```
 
 
-# Now cleaning and sorting said data
+Now cleaning and sorting said data
 
 ```{r}
 math_scores_2023 <- data_cleaner(math_scores_2023)
@@ -172,7 +170,7 @@ ela_scores_2023 <- data_cleaner(ela_scores_2023)
 ```
 
 
-# Find the relationship between school and per capita income
+Find the relationship between school and per capita income
 
 ```{r}
 
@@ -201,7 +199,7 @@ zip_incomes <- zip_incomes |> rename(ZIP = GEOID)
 schools_income <- left_join(schools_zips, zip_incomes, by = "ZIP")
 
 ```
-# Normalize the school name vector function
+Normalize the school name vector function
 
 ```{r}
 
@@ -220,7 +218,7 @@ normalize <- function(name) {
 }
     
 ```
-# Now find the relationship between zip codes and schools
+Now find the relationship between zip codes and schools
 
 ```{r}
 
@@ -234,7 +232,7 @@ income_math_scores <- math_scores_2023 |>
   inner_join(schools_income, by = "School.Name")
 ```
 
-# How is the correlation?
+How is the correlation?
 
 ```{r}
 no_outliers <- income_ela_scores |> 
@@ -263,6 +261,8 @@ cor(income_math_scores$Income_per_cap, income_math_scores$Proficient.Pct)
 
 cor(no_outliers$Income_per_cap, no_outliers$Proficient.Pct)
 ```
+
+Calculate the change between test scores post-COVID
 
 ```{r}
 
