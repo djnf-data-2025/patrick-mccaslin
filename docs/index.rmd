@@ -89,11 +89,7 @@ A demonstrated positive correlation between income and MCAP test score may influ
 
 Originally, I was going to complete a geospatial analysis for a more accurate picture of the income vs scores relationship. However, now I'm wondering if I should focus the story on the surprisingly small effect it has on test scores?
 
-Or, if I should completely pivot to other factors such as race or geography. Perhaps stratifying these results by county would reveal different impacts depending on the county?
-
-<h2>Estimated time of completion:</h2>
-
-Three weeks (Early July)
+Or, if I should completely pivot to other factors such as race or geography. Perhaps stratifying these results by county would reveal different impacts depending on the county? I noted stronger results in Montgomery County for instance.
 
 <h2>Documentation of project</h2>
 
